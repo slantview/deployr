@@ -1,0 +1,6 @@
+#!/usr/bin/env ruby
+
+require 'deployr/cli'
+cli = Deployr::CLI.new
+cli.parse_options
+cli.execute
