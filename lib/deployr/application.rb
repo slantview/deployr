@@ -17,14 +17,8 @@
 #
 
 module Deployr
-  class Command
-    class ServerDelete < Command
-      
-      banner "deployr server delete SERVER (options)"
-      
-      def run
-        ui.msg "Running Server Delete..."
-      end
+  class Application
+    def initialize
     end
   end
 end
