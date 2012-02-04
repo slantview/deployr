@@ -1,4 +1,4 @@
-## Deployr
+# Deployr
 
 Deployr is a build management software designed to make testing and deploying
 web based applications as seamless as possible.  It is a plugin based system
@@ -8,12 +8,12 @@ during the build and deployment.
 You can also link into other libraries and use existing testing frameworks.
 
 
-## Documentation
+# DOCUMENTATION
 
 * [http://github.com/slantview/deployr/wiki/Docs](http://github.com/slantview/deployr/wiki/Docs)
 
 
-## DEPENDENCIES
+# DEPENDENCIES
 
 * [Net::SSH](http://net-ssh.rubyforge.org)
 * [Net::SFTP](http://net-ssh.rubyforge.org)
@@ -22,14 +22,14 @@ You can also link into other libraries and use existing testing frameworks.
 * [HighLine](http://highline.rubyforge.org)
 
 
-## USAGE
+# USAGE
 
 * TODO.
 
 
-## LICENSE:
+# LICENSE
 
-# Apache License, Version 2.0
+## Apache License, Version 2.0
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -44,7 +44,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 
 
-## CREDITS
+# CREDITS
 
 Author: Steve Rude (<steve@slantview.com>)
 Copyright: Copyright (c) 2012 Slantview Media.
