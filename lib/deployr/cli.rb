@@ -11,7 +11,7 @@ module Deployr
     include Mixlib::CLI
     
     # Add our mix-ins
-    include Execute
+    #include Execute
     
     NO_COMMAND_GIVEN = "You need to pass a sub-command (e.g., deployr SUB-COMMAND)\n"
     
@@ -94,12 +94,33 @@ module Deployr
       end
       puts self.opt_parser
       puts
-      command.list_commands
+      Deployr::Command.list_commands
       exit exitcode
     end
+
+    # Execute the command
+    def run
+      Mixlib::Log::Formatter.show_time = false
+      validate_and_parse_options
+      quiet_traps
+      execute!
+      exit 0
+    end
     
-    def command
-      @command ||= Deployr::Command.new(options)
+    # Internal execute command
+    def execute!
+      Deployr::Command.run(ARGV, options)
+    end
+    
+    private
+    def quiet_traps
+      trap("TERM") do
+        exit 1
+      end
+      
+      trap("INT") do
+        exit 2
+      end
     end
   end
 end

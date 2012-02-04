@@ -1,3 +1,5 @@
+require 'deployr/command'
+
 module Deployr
   class CLI
     module Execute
@@ -12,11 +14,7 @@ module Deployr
       
       # Internal execute command
       def execute!
-        command.run(ARGV, options)
-      end
-      
-      def command
-        @command ||= Deployr::Command.new
+        Deployr::Command.run(ARGV, options)
       end
       
       private

@@ -1,8 +1,8 @@
 module Deployr
   class Command
-    class Init < Command
+    class Rollback < Command
       
-      banner "deployr init (options)"
+      banner "deployr rollback (options)"
 
       option :dir,
         :short => "-d DIR",
@@ -11,7 +11,7 @@ module Deployr
         :default => ENV['HOME'] + "/.deployr"
       
       def run
-        ui.msg "Running Init..."
+        ui.msg "Running Rollback..."
       end
     end
   end

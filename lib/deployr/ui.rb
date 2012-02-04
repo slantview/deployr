@@ -1,7 +1,7 @@
 module Deployr
   class UI
     
-    def initialize(stdout, stderr, stdin, config)
+    def initialize(stdout, stderr, stdin, *config)
       @stdout, @stderr, @stdin, @config = stdout, stderr, stdin, config
     end
     
@@ -13,14 +13,14 @@ module Deployr
     end
     
     def msg(message)
-      stdout.puts message
+      @stdout.puts message
     end
     
     alias :info :msg
 
     # Prints a msg to stderr. Used for warn, error, and fatal.
     def err(message)
-      stderr.puts message
+      @stderr.puts message
     end
 
     # Print a warning message

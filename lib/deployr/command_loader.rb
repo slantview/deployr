@@ -8,13 +8,11 @@ module Deployr
     attr_reader :env
     
     def initialize(deployr_config_dir, env=ENV)
-      Deployr::Log.debug "Initializing CommandLoader..."
       @deployr_config_dir, @env = deployr_config_dir, env
       @forced_activate = {}
     end
     
     def load_commands
-      Deployr::Log.debug "Loading commands..."
       subcommand_files.each { |subcommand| Kernel.load subcommand }
       true
     end
@@ -23,7 +21,7 @@ module Deployr
       @subcommand_files ||= (gem_and_builtin_subcommands.values + site_subcommands).flatten.uniq
     end
     
-    # Returns an Array of paths to knife commands located in deployr_config_dir/command/
+    # Returns an Array of paths to deployr commands located in deployr_config_dir/command/
     # and ~/.deployr/command/
     def site_subcommands
       user_specific_files = []

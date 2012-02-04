@@ -1,17 +1,17 @@
 module Deployr
   class Command
-    class Init < Command
+    class Deploy < Command
       
-      banner "deployr init (options)"
+      banner "deployr deploy (options)"
 
-      option :dir,
-        :short => "-d DIR",
+      option :environment,
+        :short => "-E ENVIRONMENT",
         :long => "--dir DIR",
         :description => "The directory to initialize.",
         :default => ENV['HOME'] + "/.deployr"
       
       def run
-        ui.msg "Running Init..."
+        ui.msg "Running Deploy..."
       end
     end
   end
