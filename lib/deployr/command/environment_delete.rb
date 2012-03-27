@@ -23,6 +23,7 @@ module Deployr
       banner "deployr environment delete ENVIRONMENT (options)"
       
       def run
+      	
         @environment_name = @name_args[0]
 
         if @environment_name.nil?

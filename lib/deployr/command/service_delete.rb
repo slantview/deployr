@@ -23,7 +23,15 @@ module Deployr
       banner "deployr service delete SERVICE (options)"
       
       def run
-        ui.msg "Running Service Delete..."
+
+        @service_name = @name_args[0]
+
+        if @service_name.nil?
+          show_usage
+          ui.fatal("You must specify a service name")
+          exit 1
+        end
+        ui.msg "Running Service Delete (#{@service_name})..."
       end
     end
   end

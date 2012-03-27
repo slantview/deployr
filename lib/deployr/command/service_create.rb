@@ -23,7 +23,15 @@ module Deployr
       banner "deployr service create SERVICE (options)"
       
       def run
-        ui.msg "Running Service Create..."
+
+        @service_name = @name_args[0]
+
+        if @service_name.nil?
+          show_usage
+          ui.fatal("You must specify a service name")
+          exit 1
+        end
+        ui.msg "Running Service Create (#{@service_name})..."
       end
     end
   end

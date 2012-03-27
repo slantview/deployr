@@ -23,7 +23,15 @@ module Deployr
       banner "deployr server create SERVER (options)"
       
       def run
-        ui.msg "Running Server Create..."
+
+        @server_name = @name_args[0]
+
+        if @server_name.nil?
+          show_usage
+          ui.fatal("You must specify a server name")
+          exit 1
+        end
+        ui.msg "Running Server Create (#{@server_name})..."
       end
     end
   end
