@@ -16,27 +16,12 @@
 # limitations under the License.
 #
 
-require 'deployr/dsl/hook_dsl'
-require 'deployr/dsl/key_dsl'
-require 'deployr/dsl/platform_dsl'
-require 'deployr/dsl/service_dsl'
+require "sqlite3"
 
 module Deployr
-  class Platform
-    include Deployr::HookDSL
-    include Deployr::KeyDSL
-    include Deployr::PlatformDSL
-    include Deployr::ServiceDSL
-
-    def show_info
-      puts "Hooks: "
-      puts @hooks
-      puts "Keys: "
-      puts @keys
-      puts "Platforms: "
-      puts @platforms
-      puts "Services: "
-      puts @services
+  class Db
+    def initialize(file)
+      @db = SQLite3::Database.new file
     end
   end
 end

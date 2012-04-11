@@ -71,32 +71,4 @@ service "httpd",
   :backup_command => nil,
   :backup_to => "/var/www/backups"
 
-service "mysqld",
-  :type => :service_mysql,
-  :port => "3306",
-  :db_user => "root",
-  :db_pass => "password",
-  :db_name => "drupal",
-  :start_command => "service mysqld start",
-  :stop_command => "service mysqld stop",
-  :restart_command => "service mysqld restart",
-  :backup_command => lambda { Deployr::Service::MySQL.backup },
-  :backup_to => "/var/www/backups"
-
-service "memcached",
-  :type => :service_memcached,
-  :start_command => "service memcached start",
-  :stop_command => "service memcached stop",
-  :restart_command => "service memcached restart"
-
-service "varnish",
-  :type => :service_varnish,
-  :start_command => "service varnish start",
-  :stop_command => "service varnish stop",
-  :restart_command => "service varnish restart"
-
-key "default",
-  :type => "rsa",
-  :private_key => "~/.ssh/id_rsa",
-  :public_key => "~/.ssh/id_rsa.pub"
 

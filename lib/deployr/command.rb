@@ -17,6 +17,7 @@
 #
 
 require 'deployr/command_loader'
+require 'deployr/platform_loader'
 require 'deployr/mixin/convert_to_class'
 require 'net/http'
 require 'json'
@@ -37,11 +38,11 @@ module Deployr
     def self.msg(msg="")
       ui.msg(msg)
     end
-    
+
     def initialize(argv={})
       super()
       @ui = Deployr::UI.new(STDOUT, STDERR, STDIN, config)
-      
+
       command_name_words = self.class.snake_case_name.split('_')
 
       # Mixlib::CLI ignores the embedded name_args
@@ -53,7 +54,7 @@ module Deployr
       # the case that command name words could be joined by an underscore :/
       command_name_words = command_name_words.join('_')
       @name_args.reject! { |name_arg| command_name_words == name_arg }
-   
+
       if config[:help]
         msg opt_parser
         exit 1
@@ -81,9 +82,10 @@ module Deployr
         commands[subclass.snake_case_name] = subclass
       end
     end
-    
+
     def self.run(args, options={})
       load_commands
+      load_platforms
 
       command_class = command_class_from(args)
       command_class.options = options.merge!(command_class.options)
@@ -92,12 +94,12 @@ module Deployr
       instance.configure_deployr
       instance.run_with_pretty_exceptions
     end
-    
+
     def self.command_class_from(args)
       command_words = args.select {|arg| arg =~ /^(([[:alnum:]])[[:alnum:]\_\-]+)$/ }
 
       command_class = nil
-      
+
       while ( !command_class ) && ( !command_words.empty? )
         snake_case_class_name = command_words.join("_")
         unless command_class = commands[snake_case_class_name]
@@ -108,17 +110,17 @@ module Deployr
       command_class ||= commands[args.first.gsub('-', '_')]
       command_class || command_not_found!(args)
     end
-    
+
     def self.snake_case_name
       convert_to_snake_case(name.split('::').last) unless unnamed?
     end
-    
+
     # Load all the sub-commands
     def self.load_commands
        @commands_loaded ||= command_loader.load_commands
       true
     end
-    
+
     def self.command_loader
       @command_loader || Deployr::CommandLoader.new(deployr_config_dir)
     end
@@ -156,7 +158,7 @@ module Deployr
 
       exit 10
     end
-    
+
     @@deployr_config_dir = nil
 
     # search upward from current_dir until .deployr directory is found
@@ -174,13 +176,13 @@ module Deployr
       end
       @@deployr_config_dir
     end
-    
+
     def self.list_commands(preferred_category=nil)
       load_commands
 
       category_desc = preferred_category ? preferred_category + " " : ''
       ui.msg "Available #{category_desc}commands: (for details, deployr SUB-COMMAND --help)\n\n"
-      
+
       if preferred_category && commands_by_category.key?(preferred_category)
         commands_to_show = {preferred_category => commands_by_category[preferred_category]}
       else
@@ -196,7 +198,7 @@ module Deployr
         ui.msg ""
       end
     end
-    
+
     def self.commands_by_category
       unless @commands_by_category
         @commands_by_category = Hash.new { |hash, key| hash[key] = [] }
@@ -222,7 +224,7 @@ module Deployr
       end
       matching_category
     end
-    
+
     def self.want_help?(args)
       (args.any? { |arg| arg =~ /^(:?(:?\-\-)?help|\-h)$/})
     end
@@ -247,7 +249,16 @@ module Deployr
       show_usage
       exit(1)
     end
-    
+
+    def self.load_platforms
+      @platforms_loaded ||= platform_loader.load_platforms
+      true
+    end
+
+    def self.platform_loader
+      @platform_loader || Deployr::PlatformLoader.new(deployr_config_dir)
+    end
+
     def configure_deployr
       unless config[:config_file]
         if self.class.deployr_config_dir
@@ -302,9 +313,11 @@ module Deployr
         #raise ArgumentError, "No user specified, pass via -u or specifiy 'node_name' in #{config[:config_file] ? config[:config_file] : "~/.deployr/deployr.rb"}"
       end
     end
-    
+
     def read_config_file(config_file=nil)
-      #TODO
+      ui.msg "Config file: #{config_file}"
+      application = Deployr::Platform::Drupal.new
+      application.show_info
     end
 
     def show_usage

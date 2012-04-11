@@ -16,27 +16,15 @@
 # limitations under the License.
 #
 
-require 'deployr/dsl/hook_dsl'
-require 'deployr/dsl/key_dsl'
-require 'deployr/dsl/platform_dsl'
-require 'deployr/dsl/service_dsl'
-
 module Deployr
-  class Platform
-    include Deployr::HookDSL
-    include Deployr::KeyDSL
-    include Deployr::PlatformDSL
-    include Deployr::ServiceDSL
+  class Command
+    class Status < Command
 
-    def show_info
-      puts "Hooks: "
-      puts @hooks
-      puts "Keys: "
-      puts @keys
-      puts "Platforms: "
-      puts @platforms
-      puts "Services: "
-      puts @services
+      banner "deployr status (options)"
+
+      def run
+        ui.msg "Running Status..."
+      end
     end
   end
 end

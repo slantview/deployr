@@ -17,18 +17,9 @@
 #
 
 application :deployr,
-  :type => Deployr::Application::DRUPAL,
+  :type => :drupal,
   :description => "The deployr system.",
-  :servers => [:web, :db],
-  :default => true,
-  :service {
-    :web {
-      :deploy_to => "/var/www",
-    },
-    :httpd {
-      :db_name => "deployr_production"
-    }
-  }
+  :default => true
 
 server :web,
   :ip_address => "50.56.81.197",
@@ -36,7 +27,7 @@ server :web,
   :ssh_user => "root",
   :ssh_key => "~/.ssh/id_rsa.pub",
   :ssh_password => "password",
-  :services => [:httpd, :memcached, :varnish]
+  :services => [:apache2, :memcached, :varnish]
 
 server :db,
   :ip_address => "50.56.81.197",
@@ -46,12 +37,3 @@ server :db,
   :ssh_password => "password",
   :services => [ :mysqld ]
 
-service :httpd,
-  :type => Deployr::Service::Apache2,
-  
-service :db, 
-  :type => Deployr::Service::MySQL,
-  :backup_to => "/var/www/backups"
-
-service :memcached, :type => Deployr::Service::Memcached
-service :varnish, :type => Deployr::Service::Varnish

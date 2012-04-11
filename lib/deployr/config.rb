@@ -22,10 +22,12 @@ require 'mixlib/config'
 module Deployr
   class Config
     extend(Mixlib::Config)
-    
+
     configure do |c|
       c[:version] = Deployr::VERSION
       c[:log_level] = 'debug'
+      c[:db_file] = '.deployr.db'
     end
+
   end
 end
