@@ -1,7 +1,6 @@
-# Waterfall Speed Test
+# Deployr
 
-Waterfall Speed Test (wst) is a utility application for testing your website
-speed and integrating with the waterfall.io service.
+Deployr is a tool for deploying websites.
 
 # DOCUMENTATION
 
