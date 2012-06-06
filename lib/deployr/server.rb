@@ -28,6 +28,7 @@ module Deployr
     attr_reader :port
     attr_reader :user
     attr_reader :key
+    attr_reader :connected
 
     def self.default_user
       ENV['USER'] || ENV['USERNAME'] || "deployr"
@@ -57,6 +58,7 @@ module Deployr
     end
 
     def exec(cmd)
+      connect unless @connected
       @connection.exec!(cmd)
     end
 

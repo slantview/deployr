@@ -39,6 +39,7 @@ module Deployr
   ConnectionError     = Class.new(Deployr::RemoteError)
   TransferError       = Class.new(Deployr::RemoteError)
   CommandError        = Class.new(Deployr::RemoteError)
+  FatalError          = Class.new(Deployr::RemoteError)
 
   LocalArgumentError  = Class.new(Deployr::Error)
 end

@@ -90,14 +90,24 @@ module Deployr
         :callback => "postdeploy_test"
 
       # Rollback hooks
-      hook :rollback,
+      hook :maintenance_mode_on,
         :command => :rollback,
         :after => nil,
-        :callback => "rollback"
+        :callback => "maintenance_mode_on"
+
+      hook :backup_database,
+        :command => :rollback,
+        :after => :maintenance_mode_on,
+        :callback => "backup_database"
+
+      hook :restore_database,
+        :command => :rollback,
+        :after => :backup_database,
+        :callback => "restore_database"
 
       hook :rollback_code,
         :command => :rollback,
-        :after => :rollback,
+        :after => :restore_database,
         :callback => "rollback_code"
 
       # Administrative hooks
@@ -177,21 +187,25 @@ module Deployr
           # drush sql-dump --result-file=../18.sql    Save SQL dump to the directory above Drupal root.
           # drush sql-dump --skip-tables-key=common
           # PREVIOUS_RELEASE=`ls -tr /var/www/test.workhabit.com/releases | tail -1`; drush sql-dump --root=/var/www/test.workhabit.com/current --result-file=/var/www/test.workhabit.com/releases/${PREVIOUS_RELEASE}/backup_${PREVIOUS_RELEASE}.sql
+          root_dir = File.join(@deployment.releases_path, "${PREVIOUS_RELEASE}", @deployment.code_dir)
+          backup_file = File.join(@deployment.releases_path, "${PREVIOUS_RELEASE}", "backup_${CURRENT_DATETIME}.sql")
+
           cmd = [
             "PREVIOUS_RELEASE=`ls -tr #{@deployment.releases_path} | tail -1`;",
             "CURRENT_DATETIME=`date +%Y%m%d%H%M%S`;",
             "drush",
             "sql-dump",
-            "--root=#{@deployment.current_path}",
-            "--result-file=#{@deployment.releases_path}/${PREVIOUS_RELEASE}/backup_${CURRENT_DATETIME}.sql",
+            "--root=#{root_dir}",
+            "--result-file=#{backup_file}",
             "--gzip"
           ].join(' ')
+
           ui.msg "Running database backup to #{@deployment.releases_path}/${PREVIOUS_RELEASE}/backup_${CURRENT_DATETIME}.sql"
           output = @deployment.invoke_command(cmd)
           output.each do |server, text|
             if text !~ /success/
               ui.fatal text
-              raise Deployr::Error, "Database backup not successful on #{server}."
+              raise Deployr::CommandError, "Database backup not successful on #{server}."
             end
           end
         end
@@ -223,6 +237,8 @@ module Deployr
           link_from = File.join(@deployment.release_path, @deployment.code_dir)
           link_to = @deployment.current_path
           @deployment.invoke_command("rm -f #{@deployment.current_path} && ln -s #{link_from} #{link_to}")
+          # So we know what way to rollback, and we don't re-rollback.
+          @deployment.pointer_moved = true
         end
 
         def clear_cache
@@ -233,6 +249,8 @@ module Deployr
         def restart_services
           ui.msg "Deploy#restart_services"
           # run service restarts based on services defined.
+          # TODO: FIXME this should be up there ^^^
+          @deployment.invoke_command("drush --root=#{@deployment.current_path} cache-clear all -y")
         end
 
         def postdeploy_test
@@ -246,11 +264,95 @@ module Deployr
 
         def rollback(msg)
           # reset the current pointer
-          ui.fatal "#{msg}"
+          ui.fatal "#{msg}" if msg
           ui.fatal "Rolling back."
           # Move pointer
           # remove deployment dir
+          if @deployment.pointer_moved || !error
+            cmd = [
+              "PREVIOUS_RELEASE=`ls -tr #{@deployment.releases_path} | tail -1`;",
+              "rm -f #{@deployment.current_path} && ln -s #{@deployment.releases_path}/${PREVIOUS_RELEASE} #{@deployment.current_path}"
+            ].join(' ')
+
+            @deployment.invoke_command(cmd)
+          end
           ui.fatal "Rollback complete."
+        end
+      end
+
+      module Rollback
+        def maintenance_mode_on
+          ui.msg "Turning on Maintenance mode"
+          #@deployment.invoke("echo MAINTENANCE_MODE_COMMAND_HERE")
+        end
+
+        def backup_database
+          ui.msg "Backing up current database"
+
+          root_dir = File.join(@deployment.releases_path, "${CURRENT_RELEASE}", @deployment.code_dir)
+          backup_file = File.join(@deployment.releases_path, "${CURRENT_RELEASE}", "backup_${CURRENT_DATETIME}.sql")
+
+          cmd = [
+            "CURRENT_RELEASE=`ls -tr #{@deployment.releases_path} | tail -1`;",
+            "CURRENT_DATETIME=`date +%Y%m%d%H%M%S`;",
+            "drush",
+            "sql-dump",
+            "--root=#{root_dir}",
+            "--result-file=#{backup_file}",
+            "--gzip"
+          ].join(' ')
+
+          ui.msg "Running database backup to #{@deployment.releases_path}/${CURRENT_RELEASE}/backup_${CURRENT_DATETIME}.sql"
+          output = @deployment.invoke_command(cmd)
+          output.each do |server, text|
+            if text !~ /success/
+              ui.fatal text
+              raise Deployr::CommandError, "Database backup not successful on #{server}."
+            end
+          end
+        end
+
+        def restore_database
+          ui.msg "Restoring previous database"
+
+          root_dir = File.join(@deployment.releases_path, "${PREVIOUS_RELEASE}", @deployment.code_dir)
+
+          cmd = [
+            "PREVIOUS_RELEASE=`ls -tr #{@deployment.releases_path} | tail -2 | head -1`;",
+            "PREVIOUS_DATABASE=`ls -tr #{@deployment.releases_path}/${PREVIOUS_RELEASE}/backup_*.sql.gz | tail -1",
+            "gunzip ${PREVIOUS_DATABASE};",
+            "CONNECT=`drush --root=#{root_dir} sql-connect`",
+            "${CONNECT} < ${PREVIOUS_DATABASE"
+          ].join(' ')
+
+          ui.msg "Running database restore from previous database."
+          #output = @deployment.invoke_command("echo #{cmd}")
+          # output.each do |server, text|
+          #   if text !~ /success/
+          #     ui.fatal text
+          #     raise Deployr::CommandError, "Database backup not successful on #{server}."
+          #   end
+          # end
+        end
+
+        def rollback(msg = '')
+          ui.msg "Rolling back."
+
+          # Move pointer to maintenance page
+          # Backup database on currently deployed code base.
+          # Restore previous database
+          # Restore pointer to previous code
+
+          ui.msg "Rollback complete."
+        end
+
+        def rollback_code
+          cmd = [
+            "PREVIOUS_RELEASE=`ls -tr #{@deployment.releases_path} | tail -2 | head -1`;",
+            "rm -f #{@deployment.current_path} && ln -s #{@deployment.releases_path}/${PREVIOUS_RELEASE} #{@deployment.current_path}"
+          ].join(' ')
+
+          @deployment.invoke_command(cmd)
         end
       end
     end

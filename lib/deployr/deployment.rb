@@ -32,7 +32,7 @@ module Deployr
     include Deployr::Mixin::FromFile
     include Deployr::Deployment::Runner
 
-    attr_accessor :id, :release_name, :config, :real_release
+    attr_accessor :id, :release_name, :config, :real_release, :pointer_moved
     attr_reader :app_object
     attr_reader :deploy_to
     attr_reader :releases_path
@@ -52,6 +52,7 @@ module Deployr
     def initialize(config)
       @config = config
       @release_name = Time.now.utc.strftime("%Y%m%d%H%M%S")
+      @pointer_moved = false
 
       if @config[:deploy_file].nil?
         begin
