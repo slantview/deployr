@@ -4,7 +4,7 @@ Deployr is a tool for deploying websites.
 
 # DOCUMENTATION
 
-* [http://github.com/slantview/waterfallspeedtest/wiki/Docs](http://github.com/slantview/waterfallspeedtest/wiki/Docs)
+* [http://github.com/slantview/deployr/wiki/Docs](http://github.com/slantview/deployr/wiki/Docs)
 
 
 # USAGE
