@@ -16,29 +16,31 @@
 # limitations under the License.
 #
 
-require 'deployr/version'
-require 'deployr/config'
-require 'deployr/log'
-require 'deployr/ui'
-require 'deployr/command'
-#require 'deployr/db'
-
 module Deployr
-  DEPLOYR_ROOT = File.dirname(File.expand_path(File.dirname(__FILE__)))
+  class Service
 
-  Error = Class.new(RuntimeError)
+    attr_accessor :name
+    attr_accessor :options
+    attr_accessor :start_command
+    attr_accessor :stop_command
+    attr_accessor :restart_command
 
-  CaptureError            = Class.new(Deployr::Error)
-  NoSuchTaskError         = Class.new(Deployr::Error)
-  NoMatchingServersError  = Class.new(Deployr::Error)
+    def initialize(name, options = {}, config = {})
+      @name, @options, @config = name, options, config
 
-  class RemoteError < Error
-    attr_accessor :hosts
+      @options.each do |key, val|
+        case key.to_sym
+        when :start_command
+          @start_command = val
+          @options.delete(key)
+        when :stop_command
+          @stop_command = val
+          @options.delete(key)
+        when :restart_command
+          @restart_command = val
+          @options.delete(key)
+        end
+      end
+    end
   end
-
-  ConnectionError     = Class.new(Deployr::RemoteError)
-  TransferError       = Class.new(Deployr::RemoteError)
-  CommandError        = Class.new(Deployr::RemoteError)
-
-  LocalArgumentError  = Class.new(Deployr::Error)
 end

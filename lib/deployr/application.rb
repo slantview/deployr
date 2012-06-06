@@ -16,9 +16,40 @@
 # limitations under the License.
 #
 
+require 'deployr/platform_loader'
+
 module Deployr
   class Application
-    def initialize
+
+    include Deployr::Mixin::FromFile
+
+    attr_accessor :name, :options, :platform_name, :platform, :hooks, :services, :servers, :ssh_keys
+
+    def initialize(name, options = {}, config = {})
+      @name, @application_options, @config = name, options, config
+      load_platforms
+
+      platform_klass = platform_loader.convert_to_klass(@application_options[:platform])
+      @platform = platform_klass.new
+
+      @platform_name = @platform.platform_name
+      @options = @platform.options || {}
+      @options.merge!(@application_options)
+      @hooks = @platform.class.hooks || {}
+      @services = @platform.class.services || {}
+      @servers = @platform.class.servers || {}
+      @ssh_keys = @platform.class.ssh_keys || {}
+
     end
+
+    def load_platforms
+      @platforms_loaded ||= platform_loader.load_platforms
+      true
+    end
+
+    def platform_loader
+      @platform_loader || Deployr::PlatformLoader.new(File.dirname(@config[:config_file]))
+    end
+
   end
 end

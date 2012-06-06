@@ -16,29 +16,22 @@
 # limitations under the License.
 #
 
-require 'deployr/version'
-require 'deployr/config'
-require 'deployr/log'
-require 'deployr/ui'
-require 'deployr/command'
-#require 'deployr/db'
-
 module Deployr
-  DEPLOYR_ROOT = File.dirname(File.expand_path(File.dirname(__FILE__)))
+  module Deploy
+    module SCM
+      def self.new(scm, config={})
+        scm_file = "deployr/recipes/deploy/scm/#{scm}"
+        require(scm_file)
 
-  Error = Class.new(RuntimeError)
-
-  CaptureError            = Class.new(Deployr::Error)
-  NoSuchTaskError         = Class.new(Deployr::Error)
-  NoMatchingServersError  = Class.new(Deployr::Error)
-
-  class RemoteError < Error
-    attr_accessor :hosts
+        scm_const = scm.to_s.capitalize.gsub(/_(.)/) { $1.upcase }
+        if const_defined?(scm_const)
+          const_get(scm_const).new(config)
+        else
+          raise Deployr::Error, "could not find `#{name}::#{scm_const}' in `#{scm_file}'"
+        end
+      rescue LoadError
+        raise Deployr::Error, "could not find any SCM named `#{scm}'"
+      end
+    end
   end
-
-  ConnectionError     = Class.new(Deployr::RemoteError)
-  TransferError       = Class.new(Deployr::RemoteError)
-  CommandError        = Class.new(Deployr::RemoteError)
-
-  LocalArgumentError  = Class.new(Deployr::Error)
 end

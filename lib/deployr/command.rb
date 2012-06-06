@@ -17,7 +17,7 @@
 #
 
 require 'deployr/command_loader'
-require 'deployr/platform_loader'
+require 'deployr/deployment'
 require 'deployr/mixin/convert_to_class'
 require 'net/http'
 require 'json'
@@ -30,6 +30,8 @@ module Deployr
 
     attr_accessor :name_args
     attr_accessor :ui
+    attr_accessor :deployment
+    attr_accessor :command_name
 
     def self.ui
       @ui ||= Deployr::UI.new(STDOUT, STDERR, STDIN, {})
@@ -53,6 +55,7 @@ module Deployr
       # deployr node run_list add requires that we have extra logic to handle
       # the case that command name words could be joined by an underscore :/
       command_name_words = command_name_words.join('_')
+      @command_name = command_name_words
       @name_args.reject! { |name_arg| command_name_words == name_arg }
 
       if config[:help]
@@ -85,13 +88,14 @@ module Deployr
 
     def self.run(args, options={})
       load_commands
-      load_platforms
 
       command_class = command_class_from(args)
       command_class.options = options.merge!(command_class.options)
       command_class.load_deps unless want_help?(args)
+
       instance = command_class.new(args)
       instance.configure_deployr
+      instance.load_deployment
       instance.run_with_pretty_exceptions
     end
 
@@ -161,13 +165,13 @@ module Deployr
 
     @@deployr_config_dir = nil
 
-    # search upward from current_dir until .deployr directory is found
+    # search upward from current_dir until deploy directory is found
     def self.deployr_config_dir
       if @@deployr_config_dir.nil? # share this with subclasses
         @@deployr_config_dir = false
         full_path = Dir.pwd.split(File::SEPARATOR)
         (full_path.length - 1).downto(0) do |i|
-          candidate_directory = File.join(full_path[0..i] + [".deployr" ])
+          candidate_directory = File.join(full_path[0..i] + [".deployr"])
           if File.exist?(candidate_directory) && File.directory?(candidate_directory)
             @@deployr_config_dir = candidate_directory
             break
@@ -250,16 +254,16 @@ module Deployr
       exit(1)
     end
 
-    def self.load_platforms
-      @platforms_loaded ||= platform_loader.load_platforms
-      true
-    end
-
-    def self.platform_loader
-      @platform_loader || Deployr::PlatformLoader.new(deployr_config_dir)
-    end
-
     def configure_deployr
+      ui.msg "Starting Configure."
+
+      # Set defaults
+      config[:version] = Deployr::VERSION
+      config[:log_level] = 'debug'
+      config[:color] = true
+      config[:deploy_file] = nil
+      config[:help] = false
+
       unless config[:config_file]
         if self.class.deployr_config_dir
           candidate_config = File.expand_path('deployr.rb',self.class.deployr_config_dir)
@@ -271,57 +275,35 @@ module Deployr
           config[:config_file] = File.join(ENV['HOME'], '.deployr', 'deployr.rb')
         end
       end
-
-      # Don't try to load a deployr.rb if it doesn't exist.
-      if config[:config_file]
-        read_config_file(config[:config_file])
-      else
-        # ...but do log a message if no config was found.
-        Deployr::Config[:color] = config[:color]
-        ui.warn("No deployr configuration file found")
-      end
-
-      Deployr::Config[:color] = config[:color]
-
-      case config[:verbosity]
-      when 0
-        Deployr::Config[:log_level] = :error
-      when 1
-        Deployr::Config[:log_level] = :info
-      else
-        Deployr::Config[:log_level] = :debug
-      end
-
-      Deployr::Config[:node_name]         = config[:node_name]       if config[:node_name]
-      Deployr::Config[:client_key]        = config[:client_key]      if config[:client_key]
-      Deployr::Config[:deployr_server_url]   = config[:deployr_server_url] if config[:deployr_server_url]
-      Deployr::Config[:environment]       = config[:environment]     if config[:environment]
-
-      # Expand a relative path from the config directory. Config from command
-      # line should already be expanded, and absolute paths will be unchanged.
-      if Deployr::Config[:client_key] && config[:config_file]
-        Deployr::Config[:client_key] = File.expand_path(Deployr::Config[:client_key], File.dirname(config[:config_file]))
-      end
-
-      Mixlib::Log::Formatter.show_time = false
-      Deployr::Log.init(Deployr::Config[:log_location])
-      Deployr::Log.level(Deployr::Config[:log_level] || :error)
-
-      Deployr::Log.debug("Using configuration from #{config[:config_file]}")
-
-      if Deployr::Config[:node_name].nil?
-        #raise ArgumentError, "No user specified, pass via -u or specifiy 'node_name' in #{config[:config_file] ? config[:config_file] : "~/.deployr/deployr.rb"}"
-      end
+      read_config_file(config[:config_file])
     end
 
     def read_config_file(config_file=nil)
-      ui.msg "Config file: #{config_file}"
-      application = Deployr::Platform::Drupal.new
-      application.show_info
+      if File.exists?(config_file)
+        Deployr::Config.from_file(config_file)
+      end
+    end
+
+    def load_deployment
+      @deployment ||= Deployr::Deployment.new(config)
+      @deployment.load_deploy_file
+      # TODO: fix this shit.  shouldn't need this here.
+      @application = @deployment.app_object
+
+      # Now this is a little weird, we want to extend deployment so that it has
+      # the functionality defined in the platform.  This can be extended also by
+      # the application instance because of the Deployfile.
+      klass_name = self.class.name.split('::').last
+      platform_command_klass = @application.platform.class.const_get(klass_name)
+      self.extend(platform_command_klass)
     end
 
     def show_usage
       ui.msg("USAGE: " + self.opt_parser.to_s)
+    end
+
+    def self.deployment
+      @deployment ||= Deployr::Deployment.new(config)
     end
 
     def run_with_pretty_exceptions
@@ -350,9 +332,6 @@ module Deployr
         ui.info  "This may be a bug in the '#{self.class.common_name}' deployr command or plugin"
         ui.info  "Please collect the output of this command with the `-VV` option before filing a bug report."
         ui.info  "Exception: #{e.class.name}: #{e.message}"
-      when Chef::Exceptions::PrivateKeyMissing
-        ui.error "Your private key could not be loaded from #{api_key}"
-        ui.info  "Check your configuration file and ensure that your private key is readable"
       else
         ui.error "#{e.class.name}: #{e.message}"
       end

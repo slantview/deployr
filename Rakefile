@@ -7,7 +7,7 @@ end
 
 task :install do
   Rake::Task["build"].execute
-  system "sudo gem install deployr-#{Deployr::VERSION}"
+  system "gem install deployr-#{Deployr::VERSION}.gem --no-rdoc --no-ri -l"
 end
   
 task :release => :build do

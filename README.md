@@ -1,31 +1,16 @@
-# Deployr
+# Waterfall Speed Test
 
-Deployr is a build management software designed to make testing and deploying
-web based applications as seamless as possible.  It is a plugin based system
-that allows you to create your own tests and execute these at various points
-during the build and deployment.
-
-You can also link into other libraries and use existing testing frameworks.
-
+Waterfall Speed Test (wst) is a utility application for testing your website
+speed and integrating with the waterfall.io service.
 
 # DOCUMENTATION
 
-* [http://github.com/slantview/deployr/wiki/Docs](http://github.com/slantview/deployr/wiki/Docs)
-
-
-# DEPENDENCIES
-
-* [Net::SSH](http://net-ssh.rubyforge.org)
-* [Net::SFTP](http://net-ssh.rubyforge.org)
-* [Net::SCP](http://net-ssh.rubyforge.org)
-* [Net::SSH::Gateway](http://net-ssh.rubyforge.org)
-* [HighLine](http://highline.rubyforge.org)
+* [http://github.com/slantview/waterfallspeedtest/wiki/Docs](http://github.com/slantview/waterfallspeedtest/wiki/Docs)
 
 
 # USAGE
 
 * TODO.
-
 
 # LICENSE
 

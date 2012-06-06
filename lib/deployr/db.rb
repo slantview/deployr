@@ -16,7 +16,7 @@
 # limitations under the License.
 #
 
-require "sqlite3"
+#require "sqlite3"
 
 module Deployr
   class Db

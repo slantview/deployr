@@ -16,30 +16,38 @@
 # limitations under the License.
 #
 
-require 'deployr/recipes/deploy'
-
 module Deployr
-  class Command
-    class Deploy < Command
+  class Deployment
+    module Runner
 
-      banner "deployr deploy (options)"
+      attr_accessor :errors
+      attr_accessor :transaction
+      attr_accessor :command
 
-      def run
-        ui.msg "Deploy#run"
+      def start(command)
+        @command = command
+        @hooks.each do |hook, options|
+          if (options[:command] == @command.command_name.to_sym)
+            begin
+              @command.send(options[:callback])
+            rescue Exception => e
+              @command.send(:rollback, "#{e}")
+              exit -1
+            end
+          end
+        end
 
-        #ui.msg "Extending klass: #{deploy_klass.to_s}"
-        #@deployment.extend(deploy_klass)
-        @source = Deployr::Deploy::SCM.new(@application.options[:scm], deployment)
-        @strategy = Deployr::Deploy::Strategy.new(@application.options[:strategy], deployment, @source)
-        @deployment.real_release = @source.query_revision(@source.head) { |cmd| @deployment.invoke_local_command(cmd) }
-        @deployment.start(self)
+        finish
+      end
+
+      def transaction
+        @transaction = Hash.new
+        @errors = nil
       end
 
       def finish
-        ui.msg "Cleaning up old releases."
-        @deployment.cleanup_old_releases
-
-        ui.msg "Deploy complete."
+        # if no errors, finalize transaction
+        @command.finish
       end
     end
   end

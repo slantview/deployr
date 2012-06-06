@@ -16,29 +16,15 @@
 # limitations under the License.
 #
 
-require 'deployr/version'
-require 'deployr/config'
-require 'deployr/log'
-require 'deployr/ui'
-require 'deployr/command'
-#require 'deployr/db'
+require 'deployr/recipes/deploy/scm'
+require 'deployr/recipes/deploy/strategy'
 
 module Deployr
-  DEPLOYR_ROOT = File.dirname(File.expand_path(File.dirname(__FILE__)))
-
-  Error = Class.new(RuntimeError)
-
-  CaptureError            = Class.new(Deployr::Error)
-  NoSuchTaskError         = Class.new(Deployr::Error)
-  NoMatchingServersError  = Class.new(Deployr::Error)
-
-  class RemoteError < Error
-    attr_accessor :hosts
+  module Deploy
+    class << self
+      def initialize(deployment, ui)
+        @deployment, @ui = deployment, ui
+      end
+    end
   end
-
-  ConnectionError     = Class.new(Deployr::RemoteError)
-  TransferError       = Class.new(Deployr::RemoteError)
-  CommandError        = Class.new(Deployr::RemoteError)
-
-  LocalArgumentError  = Class.new(Deployr::Error)
 end

@@ -16,29 +16,14 @@
 # limitations under the License.
 #
 
-require 'deployr/version'
-require 'deployr/config'
-require 'deployr/log'
-require 'deployr/ui'
-require 'deployr/command'
-#require 'deployr/db'
-
 module Deployr
-  DEPLOYR_ROOT = File.dirname(File.expand_path(File.dirname(__FILE__)))
+  class SshKey
 
-  Error = Class.new(RuntimeError)
+    attr_accessor :name
+    attr_accessor :options
 
-  CaptureError            = Class.new(Deployr::Error)
-  NoSuchTaskError         = Class.new(Deployr::Error)
-  NoMatchingServersError  = Class.new(Deployr::Error)
-
-  class RemoteError < Error
-    attr_accessor :hosts
+    def initialize(name, options = {}, config = {})
+      @name, @options, @config = name, options, config
+    end
   end
-
-  ConnectionError     = Class.new(Deployr::RemoteError)
-  TransferError       = Class.new(Deployr::RemoteError)
-  CommandError        = Class.new(Deployr::RemoteError)
-
-  LocalArgumentError  = Class.new(Deployr::Error)
 end

@@ -16,29 +16,22 @@
 # limitations under the License.
 #
 
-require 'deployr/version'
-require 'deployr/config'
-require 'deployr/log'
-require 'deployr/ui'
-require 'deployr/command'
-#require 'deployr/db'
-
 module Deployr
-  DEPLOYR_ROOT = File.dirname(File.expand_path(File.dirname(__FILE__)))
+  module Deploy
+    module Strategy
+      def self.new(strategy, config={}, source)
+        strategy_file = "deployr/recipes/deploy/strategy/#{strategy}"
+        require(strategy_file)
 
-  Error = Class.new(RuntimeError)
-
-  CaptureError            = Class.new(Deployr::Error)
-  NoSuchTaskError         = Class.new(Deployr::Error)
-  NoMatchingServersError  = Class.new(Deployr::Error)
-
-  class RemoteError < Error
-    attr_accessor :hosts
+        strategy_const = strategy.to_s.capitalize.gsub(/_(.)/) { $1.upcase }
+        if const_defined?(strategy_const)
+          const_get(strategy_const).new(config, source)
+        else
+          raise Deployr::Error, "could not find `#{name}::#{strategy_const}' in `#{strategy_file}'"
+        end
+      rescue LoadError
+        raise Deployr::Error, "could not find any strategy named `#{strategy}'"
+      end
+    end
   end
-
-  ConnectionError     = Class.new(Deployr::RemoteError)
-  TransferError       = Class.new(Deployr::RemoteError)
-  CommandError        = Class.new(Deployr::RemoteError)
-
-  LocalArgumentError  = Class.new(Deployr::Error)
 end

@@ -26,7 +26,9 @@ module Deployr
     configure do |c|
       c[:version] = Deployr::VERSION
       c[:log_level] = 'debug'
-      c[:db_file] = '.deployr.db'
+      c[:color] = true
+      c[:deploy_file] = nil
+      c[:help] = false
     end
 
   end

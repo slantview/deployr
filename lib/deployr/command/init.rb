@@ -16,10 +16,12 @@
 # limitations under the License.
 #
 
+require 'deployr/recipes/init/setup'
+
 module Deployr
   class Command
     class Init < Command
-      
+
       banner "deployr init (options)"
 
       option :dir,
@@ -27,9 +29,11 @@ module Deployr
         :long => "--dir DIR",
         :description => "The directory to initialize.",
         :default => ENV['HOME'] + "/.deployr"
-      
+
       def run
         ui.msg "Running Init..."
+        @setup = Deployr::Init::Setup.new(@deployment, @application, @ui)
+        @setup.create_directories
       end
     end
   end

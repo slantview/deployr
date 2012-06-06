@@ -16,27 +16,21 @@
 # limitations under the License.
 #
 
-require 'deployr/dsl/hook_dsl'
-require 'deployr/dsl/key_dsl'
-require 'deployr/dsl/platform_dsl'
-require 'deployr/dsl/service_dsl'
+require 'deployr/dsl/base'
 
 module Deployr
   class Platform
-    include Deployr::HookDSL
-    include Deployr::KeyDSL
-    include Deployr::PlatformDSL
-    include Deployr::ServiceDSL
+    include Deployr::DSL::Base
 
-    def show_info
-      puts "Hooks: "
-      puts @hooks
-      puts "Keys: "
-      puts @keys
-      puts "Platforms: "
-      puts @platforms
-      puts "Services: "
-      puts @services
+    def initialize(*args)
+      self.class.instance_variables.each do |key|
+        value = self.class.instance_variable_get(key)
+        self.instance_variable_set(key, value)
+      end
+    end
+
+    def module_get(name)
+      Kernel.const_get("#{self.class.to_s}::#{name}")
     end
   end
 end

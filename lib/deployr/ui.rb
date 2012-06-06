@@ -18,23 +18,24 @@
 
 module Deployr
   class UI
-    
+
     def initialize(stdout, stderr, stdin, *config)
       @stdout, @stderr, @stdin, @config = stdout, stderr, stdin, config
     end
-    
+
     def highline
       @highline ||= begin
         require 'highline'
         HighLine.new
       end
     end
-    
+
     def msg(message)
       @stdout.puts message
     end
-    
+
     alias :info :msg
+    alias :trace :msg
 
     # Prints a msg to stderr. Used for warn, error, and fatal.
     def err(message)
@@ -55,7 +56,7 @@ module Deployr
     def fatal(message)
       err("#{color('FATAL:', :red, :bold)} #{message}")
     end
-    
+
     def color(string, *colors)
       if color?
         highline.color(string, *colors)
@@ -63,12 +64,13 @@ module Deployr
         string
       end
     end
-    
+
     # Should colored output be used? For output to a terminal, this is
     # determined by the value of `config[:color]`. When output is not to a
     # terminal, colored output is never used
     def color?
-      Deployr::Config[:color] && stdout.tty? #&& !Chef::Platform.windows?
+      #@config[:color] && stdout.tty?
+      true
     end
 
     def ask(*args, &block)
@@ -85,6 +87,6 @@ module Deployr
     def output(data)
       msg @presenter.format(data)
     end
-    
+
   end
 end

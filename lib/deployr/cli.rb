@@ -19,7 +19,7 @@
 require 'rubygems'
 require 'mixlib/cli'
 require 'deployr'
-require 'deployr/cli/execute'
+#require 'deployr/cli/execute'
 
 
 module Deployr
@@ -27,18 +27,18 @@ module Deployr
   class CLI
     # include Mixlib::CLI for parsing functionality
     include Mixlib::CLI
-    
+
     # Add our mix-ins
     #include Execute
-    
+
     NO_COMMAND_GIVEN = "You need to pass a sub-command (e.g., deployr SUB-COMMAND)\n"
-    
+
     banner "Usage: deployr sub-command (options)"
-    
+
     option :config_file,
       :short => "-c CONFIG",
       :long => "--config CONFIG",
-      :default => "deployr.rb",
+      :default => nil,
       :description => "The configuration file to use."
 
     option :log_level,
@@ -71,7 +71,7 @@ module Deployr
       :boolean => true,
       :show_options => true,
       :exit => 0
-       
+
     def validate_and_parse_options
       # Checking ARGV validity *before* parse_options because parse_options
       # mangles ARGV in some situations
@@ -124,18 +124,18 @@ module Deployr
       execute!
       exit 0
     end
-    
+
     # Internal execute command
     def execute!
       Deployr::Command.run(ARGV, options)
     end
-    
+
     private
     def quiet_traps
       trap("TERM") do
         exit 1
       end
-      
+
       trap("INT") do
         exit 2
       end

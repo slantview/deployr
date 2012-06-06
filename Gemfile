@@ -2,7 +2,7 @@ source :rubygems
 
 gemspec
 
-gem "dep_selector", :group => :development, :platform => "ruby"
+#gem "dep_selector", :group => :development, :platform => "ruby"
 
 platforms :mswin, :mingw do
   # TODO: test with mswin, mingw

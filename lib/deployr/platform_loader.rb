@@ -26,6 +26,7 @@ module Deployr
 
     attr_reader :deployr_config_dir
     attr_reader :env
+    attr_accessor :platforms
 
     def initialize(deployr_config_dir, env=ENV)
       @deployr_config_dir, @env = deployr_config_dir, env
@@ -33,8 +34,22 @@ module Deployr
     end
 
     def load_platforms
-      platform_files.each { |platform| Kernel.load platform }
+      platform_files.each do |platform|
+        Kernel.load platform
+      end
       true
+    end
+
+    def convert_to_klass(name)
+      ObjectSpace.each_object(Class) do |klass|
+        if klass.superclass == Deployr::Platform
+          instance = klass.new
+          if klass.platform_name == name
+            return klass
+          end
+        end
+      end
+      nil
     end
 
     def platform_files
