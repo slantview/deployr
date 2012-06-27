@@ -35,8 +35,28 @@ module Deployr
         # === Returns
         # true:: Always returns true.
         def application(name, args)
+          @applications ||= {}
           raise(ArgumentError, "Application name must be a symbol") unless name.kind_of?(Symbol)
-          @application = Deployr::Application.new(name, args, @config)
+          @applications[name] = Deployr::Application.new(name, args, @config)
+        end
+
+        # Get the hash of the current applications.
+        #
+        # === Returns
+        # @applications<Hash>:: The current applications hash.
+        def applications
+          @applications ||= {}
+        end
+
+        # Set the current hooks hash
+        #
+        # === Parameters
+        # val<Hash>:: The hash to set the hooks to
+        # === Returns
+        # @hooks<Hash>:: The current hooks hash.
+        def applications=(val)
+          raise(ArgumentError, "hooks must recieve a hash") unless val.kind_of?(Hash)
+          @applications = val
         end
 
         # Add a auth key definition to a Platform
@@ -102,24 +122,6 @@ module Deployr
           @platform_name = name.to_sym
           @options = args
         end
-
-        # Get the hash of current hooks.
-        #
-        # === Returns
-        # @hooks<Hash>:: The current hooks hash.
-        #def options
-        #  @options ||= {}
-        #  @options
-        #end
-
-        # Get the hash of current hooks.
-        #
-        # === Returns
-        # @hooks<Hash>:: The current hooks hash.
-        #def alias
-        #  @alias ||= Symbol.new
-        #  @alias
-        #end
 
         # Add a service definition to a service
         #

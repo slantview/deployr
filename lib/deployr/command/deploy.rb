@@ -26,9 +26,6 @@ module Deployr
 
       def run
         ui.msg "Deploy#run"
-
-        #ui.msg "Extending klass: #{deploy_klass.to_s}"
-        #@deployment.extend(deploy_klass)
         @source = Deployr::Deploy::SCM.new(@application.options[:scm], deployment)
         @strategy = Deployr::Deploy::Strategy.new(@application.options[:strategy], deployment, @source)
         @deployment.real_release = @source.query_revision(@source.head) { |cmd| @deployment.invoke_local_command(cmd) }
@@ -38,7 +35,6 @@ module Deployr
       def finish
         ui.msg "Cleaning up old releases."
         @deployment.cleanup_old_releases
-
         ui.msg "Deploy complete."
       end
     end
