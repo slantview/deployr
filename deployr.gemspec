@@ -26,5 +26,7 @@ Gem::Specification.new do |s|
   s.add_dependency('mixlib-config', '>= 1.0.0')
   s.add_dependency('mixlib-cli', '>= 1.0.0')
   s.add_dependency('mixlib-log', '>= 1.0.0')
+  s.add_dependency('net-ssh', '>= 1.0.0')
+  s.add_dependency('highline', '>= 1.0.0')
 
 end
