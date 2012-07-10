@@ -172,7 +172,7 @@ module Deployr
         def predeploy_test
           ui.msg "Deploy#predeploy_test"
           # Test server connection
-          @deployment.find_servers_for_task.each do |name, server|
+          @deployment.find_servers_for_task(:httpd).each do |name, server|
             ui.info "Testing Server #{name} - #{server}"
             server.connect
             ui.info "#{name} OK."

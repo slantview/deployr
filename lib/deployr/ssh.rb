@@ -90,9 +90,6 @@ module Deployr
           :auth_methods => ssh_options[:auth_methods] || methods.shift
         )
 
-        puts "--- #{user}@#{host} ---"
-        puts connection_options
-
         yield host, user, connection_options
       rescue Net::SSH::AuthenticationFailed
         raise if methods.empty? || ssh_options[:auth_methods]
