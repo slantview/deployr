@@ -280,7 +280,7 @@ module Deployr
     end
 
     def read_config_file(config_file=nil)
-      if File.exists?(config_file)
+      if not config_file.nil? && File.exists?(config_file)
         Deployr::Config.from_file(config_file)
       end
     end
