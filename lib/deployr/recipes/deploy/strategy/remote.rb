@@ -43,8 +43,8 @@ module Deployr
 
           # Runs the given command, filtering output back through the
           # #handle_data filter of the SCM implementation.
-          def scm_run(command)
-            deployment.invoke_command(command)
+          def scm_run(command, filter = nil)
+            deployment.invoke_command(command, filter)
           end
 
           # An abstract method which must be overridden in subclasses, to

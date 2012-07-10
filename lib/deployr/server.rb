@@ -24,32 +24,39 @@ module Deployr
 
     attr_accessor :name
     attr_accessor :options
-    attr_reader :host
-    attr_reader :port
-    attr_reader :user
-    attr_reader :key
+    attr_accessor :host
+    attr_accessor :port
+    attr_accessor :user
+    attr_accessor :key
+    attr_accessor :services
     attr_reader :connected
 
-    def self.default_user
+    def default_user
       ENV['USER'] || ENV['USERNAME'] || "deployr"
     end
 
-    def self.default_key
+    def default_key
       "~/.ssh/id_rsa.pub"
     end
 
     def initialize(name, options = {}, config = {})
       @name, @options, @config = name, options, config
-
-      @host = @options[:ip_address]
+      @host = @options[:host]
       @port = @options[:port] || 22
       @user = @options[:ssh_user] || default_user
       @key = @options[:ssh_key] || default_key
+      @services = @options[:services]
 
     end
 
     def connect
-      @connection = Deployr::SSH.connect(self, @options)
+      connect_options = {
+        :host => host,
+        :port => port,
+        :ssh_user => user,
+        :ssh_key => key
+      }
+      @connection = Deployr::SSH.connect(self, connect_options)
       @connected = true
     end
 
@@ -60,6 +67,15 @@ module Deployr
     def exec(cmd)
       connect unless @connected
       @connection.exec!(cmd)
+    end
+
+    def has_service?(service)
+      @services.each do |name|
+        if name == service
+          return true
+        end
+      end
+      false
     end
 
     def <=>(server)

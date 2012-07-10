@@ -41,6 +41,21 @@ module Deployr
       :default => nil,
       :description => "The configuration file to use."
 
+    option :environment,
+      :short => "-E ENVIRONMENT",
+      :long => "--environment ENVIRONMENT",
+      :default => :dev,
+      :description => "The environment file to use.",
+      :proc => Proc.new { |l| l.to_sym }
+
+    option :application,
+      :short => "-a APPLICATION",
+      :long => "--application APPLICATION",
+      :default => :default,
+      :description => "The application to use. Defaults to first listed if not supplied.",
+      :proc => Proc.new { |l| l.to_sym }
+
+
     option :log_level,
       :short => "-l LEVEL",
       :long => "--log_level LEVEL",

@@ -37,6 +37,7 @@ module Deployr
     # connection information in +server+ is added last, so that +server+ info
     # takes precedence over +options+, which takes precendence over ssh_options.
     def self.connect(server, options={})
+      puts server
       connection_strategy(server, options) do |host, user, connection_options|
         connection = Net::SSH.start(host, user, connection_options)
         Server.apply_to(connection, server)
@@ -70,7 +71,7 @@ module Deployr
       ssh_options[:config] = false
 
       ssh_options[:verbose] = :debug if options[:verbose] && options[:verbose] > 0
-
+      puts "SERVER USER: #{server.user}"
       user = server.user || options[:user] || ssh_options[:username] ||
              ssh_options[:user] || Deployr::Server.default_user
       port = server.port || options[:port] || ssh_options[:port]
@@ -83,12 +84,14 @@ module Deployr
       # delete these, since we've determined which username to use by this point
       ssh_options.delete(:username)
       ssh_options.delete(:user)
-
       begin
         connection_options = ssh_options.merge(
           :password => password_value,
           :auth_methods => ssh_options[:auth_methods] || methods.shift
         )
+
+        puts "--- #{user}@#{host} ---"
+        puts connection_options
 
         yield host, user, connection_options
       rescue Net::SSH::AuthenticationFailed

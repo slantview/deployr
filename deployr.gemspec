@@ -15,7 +15,7 @@ Gem::Specification.new do |s|
   s.description = "Deployr is a build management software designed to make building, testing and deploying web based applications as seamless as possible."
 
   s.required_rubygems_version = ">= 1.3.6"
-  s.rubyforge_project         = "deployr"
+  s.rubyforge_project         = "deployr-ruby"
 
   s.add_development_dependency "rspec"
 

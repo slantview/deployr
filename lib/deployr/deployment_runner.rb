@@ -29,8 +29,11 @@ module Deployr
         @hooks.each do |hook, options|
           if (options[:command] == @command.command_name.to_sym)
             begin
-              @command.send(options[:callback])
+              transaction do 
+                @command.send(options[:callback])
+              end
             rescue Exception => e
+              #@errors.push(e)
               @command.send(:rollback, "#{e}")
               exit -1
             end
@@ -40,9 +43,10 @@ module Deployr
         finish
       end
 
-      def transaction
+      def transaction(&block)
         @transaction = Hash.new
-        @errors = nil
+        @errors = Array.new
+        block.call
       end
 
       def finish
