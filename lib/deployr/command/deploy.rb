@@ -24,21 +24,43 @@ module Deployr
 
       banner "deployr deploy (options)"
 
+      option :branch,
+        :short => "-b BRANCH",
+        :long => "--branch BRANCH",
+        :default => nil,
+        :description => "The branch to use in the repository."
+
+      def run
+        ui.msg "Deploy#run"
+        @source = Deployr::Deploy::SCM.new(@current_app.options[:scm], deployment)
+        @strategy = Deployr::Deploy::Strategy.new(@current_app.options[:strategy], deployment, @source)
+        @deployment.real_release = @source.query_revision(@source.head) { |cmd| @deployment.invoke_local_command(cmd) }
+
+      option :branch,
+        :short => "-b BRANCH",
+        :long => "--branch BRANCH",
+        :default => nil,
+        :description => "The branch to deploy."
+
       def run
         ui.msg "Deploy#run"
 
-        #ui.msg "Extending klass: #{deploy_klass.to_s}"
-        #@deployment.extend(deploy_klass)
-        @source = Deployr::Deploy::SCM.new(@application.options[:scm], deployment)
-        @strategy = Deployr::Deploy::Strategy.new(@application.options[:strategy], deployment, @source)
-        @deployment.real_release = @source.query_revision(@source.head) { |cmd| @deployment.invoke_local_command(cmd) }
+        @source = Deployr::Deploy::SCM.new(@current_app.options[:scm], deployment)
+        @strategy = Deployr::Deploy::Strategy.new(@current_app.options[:strategy], deployment, @source)
+        # Get branch 
+        branch = @source.head
+        if @config.has_key?(:branch) and not @config[:branch].nil?
+          branch = config[:branch]
+        elsif @current_app.options.has_key?(:branch) and not @current_app.options[:branch].nil?
+          branch = @current_app.options[:branch]
+        end
+        @deployment.real_release = @source.query_revision(branch) { |cmd| @deployment.invoke_local_command(cmd) }
         @deployment.start(self)
       end
 
       def finish
         ui.msg "Cleaning up old releases."
         @deployment.cleanup_old_releases
-
         ui.msg "Deploy complete."
       end
     end

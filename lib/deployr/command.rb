@@ -32,17 +32,19 @@ module Deployr
     attr_accessor :ui
     attr_accessor :deployment
     attr_accessor :command_name
+    attr_accessor :current_app
 
     def self.ui
-      @ui ||= Deployr::UI.new(STDOUT, STDERR, STDIN, {})
+      @ui ||= Deployr::UI.new(STDOUT, STDERR, STDIN, config)
     end
 
-    def self.msg(msg="")
-      ui.msg(msg)
+    def self.config
+      @config ||= Deployr::Config
     end
 
     def initialize(argv={})
       super()
+      @config = Deployr::Config
       @ui = Deployr::UI.new(STDOUT, STDERR, STDIN, config)
 
       command_name_words = self.class.snake_case_name.split('_')
@@ -52,14 +54,13 @@ module Deployr
       @name_args.delete(command_name_words.join('-'))
       @name_args.reject! { |name_arg| command_name_words.delete(name_arg) }
 
-      # deployr node run_list add requires that we have extra logic to handle
-      # the case that command name words could be joined by an underscore :/
+      # We have extra logic to handle the case that command name words could be joined by an underscore
       command_name_words = command_name_words.join('_')
       @command_name = command_name_words
       @name_args.reject! { |name_arg| command_name_words == name_arg }
 
       if config[:help]
-        msg opt_parser
+        ui.msg opt_parser
         exit 1
       end
     end
@@ -115,10 +116,6 @@ module Deployr
       command_class || command_not_found!(args)
     end
 
-    def self.snake_case_name
-      convert_to_snake_case(name.split('::').last) unless unnamed?
-    end
-
     # Load all the sub-commands
     def self.load_commands
        @commands_loaded ||= command_loader.load_commands
@@ -154,11 +151,8 @@ module Deployr
         ui.fatal("Cannot find sub command for: '#{args.join(' ')}'")
       end
 
-      if category_commands = guess_category(args)
-        list_commands(category_commands)
-      else
-        list_commands
-      end
+      category_commands = guess_category(args) ? guess_category(args) : nil
+      list_commands(category_commands)
 
       exit 10
     end
@@ -206,9 +200,7 @@ module Deployr
     def self.commands_by_category
       unless @commands_by_category
         @commands_by_category = Hash.new { |hash, key| hash[key] = [] }
-        commands.each do |snake_cased, klass|
-          @commands_by_category[klass.command_category] << snake_cased
-        end
+        commands.each { |snake_cased, klass| @commands_by_category[klass.command_category] << snake_cased }
       end
       @commands_by_category
     end
@@ -237,14 +229,6 @@ module Deployr
       name.nil? || name.empty?
     end
 
-    def self.snake_case_name
-      convert_to_snake_case(name.split('::').last) unless unnamed?
-    end
-
-    def self.common_name
-      snake_case_name.split('_').join(' ')
-    end
-
     def parse_options(args)
       super
     rescue OptionParser::InvalidOption => e
@@ -255,12 +239,12 @@ module Deployr
     end
 
     def configure_deployr
-      ui.msg "Starting Configure."
+      ui.debug "Starting Configure."
 
       # Set defaults
       config[:version] = Deployr::VERSION
-      config[:log_level] = 'debug'
-      config[:color] = true
+      config[:log_level] = :debug
+      config[:color] = false
       config[:deploy_file] = nil
       config[:help] = false
 
@@ -279,23 +263,23 @@ module Deployr
     end
 
     def read_config_file(config_file=nil)
-      if File.exists?(config_file)
-        Deployr::Config.from_file(config_file)
-      end
+      Deployr::Config.from_file(config_file) unless config_file.nil? && !File.exists?(config_file)
     end
 
     def load_deployment
       @deployment ||= Deployr::Deployment.new(config)
       @deployment.load_deploy_file
       # TODO: fix this shit.  shouldn't need this here.
-      @application = @deployment.app_object
+      @current_app = @deployment.app_object
 
       # Now this is a little weird, we want to extend deployment so that it has
       # the functionality defined in the platform.  This can be extended also by
       # the application instance because of the Deployfile.
       klass_name = self.class.name.split('::').last
-      platform_command_klass = @application.platform.class.const_get(klass_name)
-      self.extend(platform_command_klass)
+      if @current_app.platform.class.const_defined?(klass_name)
+        platform_command_klass = @current_app.platform.class.const_get(klass_name)
+        self.extend(platform_command_klass)
+      end
     end
 
     def show_usage

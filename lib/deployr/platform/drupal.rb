@@ -31,12 +31,8 @@ module Deployr
         :code_dir => '',
         :site_dir => 'sites/default',
         :settings_file => 'settings.php',
-        :drush => '/usr/bin/drush'
-
-      ssh_key :default,
-        :type => "rsa",
-        :private_key => "~/.ssh/id_rsa",
-        :public_key => "~/.ssh/id_rsa.pub"
+        :drush => '/usr/bin/drush',
+        :ssh_key => '~/.ssh/id_rsa.pub'
 
       # Deploy hooks
       hook :check,
@@ -131,7 +127,7 @@ module Deployr
         :after => nil,
         :callback => "download_db"
 
-      service :apache2,
+      service :httpd,
         :deploy_to => "/var/www",
         :start_command => "service apache2 start",
         :stop_command => "service apache2 stop",
@@ -176,7 +172,7 @@ module Deployr
         def predeploy_test
           ui.msg "Deploy#predeploy_test"
           # Test server connection
-          @deployment.servers.each do |name, server|
+          @deployment.find_servers_for_task(:httpd).each do |name, server|
             ui.info "Testing Server #{name} - #{server}"
             server.connect
             ui.info "#{name} OK."
@@ -201,7 +197,7 @@ module Deployr
           ].join(' ')
 
           ui.msg "Running database backup to #{@deployment.releases_path}/${PREVIOUS_RELEASE}/backup_${CURRENT_DATETIME}.sql"
-          output = @deployment.invoke_command(cmd)
+          output = @deployment.invoke_command(cmd, :mysqld)
           output.each do |server, text|
             if text !~ /success/
               ui.fatal text
@@ -224,11 +220,11 @@ module Deployr
           # Relink files dir
           real_settings_file = File.join(@deployment.shared_path, @deployment.settings_file)
           settings_file_link = File.join(@deployment.release_path, @deployment.code_dir, @deployment.site_dir, @deployment.settings_file)
-          @deployment.invoke_command("ln -s #{real_settings_file} #{settings_file_link}")
+          @deployment.invoke_command("ln -s #{real_settings_file} #{settings_file_link}", :httpd)
 
           real_files_dir = File.join(@deployment.shared_path, 'files')
           files_dir_link = File.join(File.join(@deployment.release_path, @deployment.code_dir, @deployment.site_dir), 'files')
-          @deployment.invoke_command("ln -s #{real_files_dir} #{files_dir_link}")
+          @deployment.invoke_command("ln -s #{real_files_dir} #{files_dir_link}", :httpd)
         end
 
         def symlink
@@ -236,21 +232,21 @@ module Deployr
           # Update current symlink to current version
           link_from = File.join(@deployment.release_path, @deployment.code_dir)
           link_to = @deployment.current_path
-          @deployment.invoke_command("rm -f #{@deployment.current_path} && ln -s #{link_from} #{link_to}")
+          @deployment.invoke_command("rm -f #{@deployment.current_path} && ln -s #{link_from} #{link_to}", :httpd)
           # So we know what way to rollback, and we don't re-rollback.
           @deployment.pointer_moved = true
         end
 
         def clear_cache
           ui.msg "Deploy#clear_cache"
-          @deployment.invoke_command("drush --root=#{@deployment.current_path} cache-clear all -y")
+          @deployment.invoke_command("drush --root=#{@deployment.current_path} cache-clear all -y", :httpd)
         end
 
         def restart_services
           ui.msg "Deploy#restart_services"
           # run service restarts based on services defined.
           # TODO: FIXME this should be up there ^^^
-          @deployment.invoke_command("drush --root=#{@deployment.current_path} cache-clear all -y")
+          @deployment.invoke_command("drush --root=#{@deployment.current_path} cache-clear all -y", :httpd)
         end
 
         def postdeploy_test
@@ -268,13 +264,13 @@ module Deployr
           ui.fatal "Rolling back."
           # Move pointer
           # remove deployment dir
-          if @deployment.pointer_moved || !error
+          if @deployment.pointer_moved
             cmd = [
               "PREVIOUS_RELEASE=`ls -tr #{@deployment.releases_path} | tail -1`;",
               "rm -f #{@deployment.current_path} && ln -s #{@deployment.releases_path}/${PREVIOUS_RELEASE} #{@deployment.current_path}"
             ].join(' ')
 
-            @deployment.invoke_command(cmd)
+            @deployment.invoke_command(cmd, :httpd)
           end
           ui.fatal "Rollback complete."
         end
@@ -303,7 +299,7 @@ module Deployr
           ].join(' ')
 
           ui.msg "Running database backup to #{@deployment.releases_path}/${CURRENT_RELEASE}/backup_${CURRENT_DATETIME}.sql"
-          output = @deployment.invoke_command(cmd)
+          output = @deployment.invoke_command(cmd, :httpd)
           output.each do |server, text|
             if text !~ /success/
               ui.fatal text
@@ -352,9 +348,10 @@ module Deployr
             "rm -f #{@deployment.current_path} && ln -s #{@deployment.releases_path}/${PREVIOUS_RELEASE} #{@deployment.current_path}"
           ].join(' ')
 
-          @deployment.invoke_command(cmd)
+          @deployment.invoke_command(cmd, :httpd)
         end
       end
+
     end
   end
 end

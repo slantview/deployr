@@ -25,7 +25,7 @@ module Deployr
       end
 
       #module ClassMethods
-        attr_reader :platform_name, :options, :hooks, :platforms, :services, :servers, :ssh_keys
+        attr_reader :platform_name, :applications, :options, :hooks, :platforms, :services, :servers, :ssh_keys
 
         # Add an Application instance
         #
@@ -35,26 +35,37 @@ module Deployr
         # === Returns
         # true:: Always returns true.
         def application(name, args)
+          @applications ||= {}
           raise(ArgumentError, "Application name must be a symbol") unless name.kind_of?(Symbol)
-          @application = Deployr::Application.new(name, args, @config)
+          @applications[name] = Deployr::Application.new(name, args, @config)
         end
 
-        # Add a auth key definition to a Platform
+        # Get the hash of the current applications.
+        #
+        # === Returns
+        # @applications<Hash>:: The current applications hash.
+        def applications
+          @applications ||= {}
+        end
+
+        # Set the current hooks hash
         #
         # === Parameters
-        # name<Symbol>:: The name of the key to add.
-        # args<Hash>:: A hash of arguments specifying how it should be parsed.
+        # val<Hash>:: The hash to set the hooks to
         # === Returns
-        # true:: Always returns true.
-        def ssh_key(name, args)
-          @ssh_keys ||= {}
-          raise(ArgumentError, "ssh_key name must be a symbol") unless name.kind_of?(Symbol)
-          @ssh_keys[name.to_sym] = args
+        # @hooks<Hash>:: The current hooks hash.
+        def applications=(val)
+          raise(ArgumentError, "hooks must recieve a hash") unless val.kind_of?(Hash)
+          @applications = val
         end
 
-        def ssh_keys
-          @ssh_keys ||= {}
-          @ssh_keys
+        # Get the hash of current applications.
+        #
+        # === Returns
+        # @applications<Hash>:: The current applications hash.
+        def applications
+          @applications ||= {}
+          @applications
         end
 
         # Add a hook definition to a hook
@@ -102,24 +113,6 @@ module Deployr
           @platform_name = name.to_sym
           @options = args
         end
-
-        # Get the hash of current hooks.
-        #
-        # === Returns
-        # @hooks<Hash>:: The current hooks hash.
-        #def options
-        #  @options ||= {}
-        #  @options
-        #end
-
-        # Get the hash of current hooks.
-        #
-        # === Returns
-        # @hooks<Hash>:: The current hooks hash.
-        #def alias
-        #  @alias ||= Symbol.new
-        #  @alias
-        #end
 
         # Add a service definition to a service
         #
@@ -185,6 +178,39 @@ module Deployr
         def servers=(val)
           raise(ArgumentError, "servers must recieve a hash") unless val.kind_of?(Hash)
           @servers = val
+        end
+
+        # Add a server definition to a server
+        #
+        # === Parameters
+        # name<Symbol>:: The name of the server to add.
+        # args<Hash>:: A hash of arguments specifying how it should be parsed.
+        # === Returns
+        # true:: Always returns true.
+        def environment(name, args)
+          @environments ||= {}
+          raise(ArgumentError, "Environment name must be a symbol") unless name.kind_of?(Symbol)
+          @environments[name.to_sym] = Deployr::Environment.new(name, args, @config)
+        end
+
+        # Get the hash of current servers.
+        #
+        # === Returns
+        # @deploy_options[:servers]<Hash>:: The current servers hash.
+        def environments
+          @environments ||= {}
+          @environments
+        end
+
+        # Set the current servers hash
+        #
+        # === Parameters
+        # val<Hash>:: The hash to set the servers to
+        # === Returns
+        # @deploy_options[:servers]<Hash>:: The current servers hash.
+        def environments=(val)
+          raise(ArgumentError, "Environments must recieve a hash") unless val.kind_of?(Hash)
+          @environments = val
         end
 
       #end

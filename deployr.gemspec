@@ -15,7 +15,7 @@ Gem::Specification.new do |s|
   s.description = "Deployr is a build management software designed to make building, testing and deploying web based applications as seamless as possible."
 
   s.required_rubygems_version = ">= 1.3.6"
-  s.rubyforge_project         = "deployr"
+  s.rubyforge_project         = "deployr-ruby"
 
   s.add_development_dependency "rspec"
 
@@ -26,5 +26,7 @@ Gem::Specification.new do |s|
   s.add_dependency('mixlib-config', '>= 1.0.0')
   s.add_dependency('mixlib-cli', '>= 1.0.0')
   s.add_dependency('mixlib-log', '>= 1.0.0')
+  s.add_dependency('net-ssh', '>= 1.0.0')
+  s.add_dependency('highline', '>= 1.0.0')
 
 end

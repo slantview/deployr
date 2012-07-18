@@ -57,6 +57,10 @@ module Deployr
       err("#{color('FATAL:', :red, :bold)} #{message}")
     end
 
+    def debug(message)
+      err message if $DEBUG
+    end
+
     def color(string, *colors)
       if color?
         highline.color(string, *colors)
@@ -69,7 +73,7 @@ module Deployr
     # determined by the value of `config[:color]`. When output is not to a
     # terminal, colored output is never used
     def color?
-      #@config[:color] && stdout.tty?
+      @config[:color] && stdout.tty?
       true
     end
 

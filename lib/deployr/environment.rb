@@ -16,12 +16,14 @@
 # limitations under the License.
 #
 
-#require "sqlite3"
-
 module Deployr
-  class Db
-    def initialize(file)
-      @db = SQLite3::Database.new file
+  class Environment
+
+    attr_accessor :name
+    attr_accessor :options
+
+    def initialize(name, options = {}, config = {})
+      @name, @options, @config = name, options, config
     end
   end
 end
