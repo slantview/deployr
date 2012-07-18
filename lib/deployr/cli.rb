@@ -41,6 +41,26 @@ module Deployr
       :default => nil,
       :description => "The configuration file to use."
 
+    option :environment,
+      :short => "-E ENVIRONMENT",
+      :long => "--environment ENVIRONMENT",
+      :default => :dev,
+      :description => "The environment file to use.",
+      :proc => Proc.new { |l| l.to_sym }
+
+    option :application,
+      :short => "-a APPLICATION",
+      :long => "--application APPLICATION",
+      :default => :default,
+      :description => "The application to use. Defaults to first listed if not supplied.",
+      :proc => Proc.new { |l| l.to_sym }
+
+    option :all_applications,
+      :short => "-A",
+      :default => false,
+      :boolean => true,
+      :description => "Deploy all defined applications in deploy file. Use -a <application> for only one."
+
     option :log_level,
       :short => "-l LEVEL",
       :long => "--log_level LEVEL",
@@ -78,7 +98,7 @@ module Deployr
       if no_command_given?
         print_help_and_exit(1, NO_COMMAND_GIVEN)
       elsif no_subcommand_given?
-        if (want_help? || want_version?)
+        if want_help? || want_version?
           print_help_and_exit
         else
           print_help_and_exit(2, NO_COMMAND_GIVEN)
@@ -127,6 +147,7 @@ module Deployr
 
     # Internal execute command
     def execute!
+      Deployr::Config.merge!(config)
       Deployr::Command.run(ARGV, options)
     end
 

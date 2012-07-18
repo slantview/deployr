@@ -24,6 +24,7 @@ module Deployr
 
       def run
         ui.msg "Running Status..."
+        ui.msg @deployment
       end
     end
   end
