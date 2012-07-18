@@ -32,10 +32,7 @@ module Deployr
     attr_accessor :ui
     attr_accessor :deployment
     attr_accessor :command_name
-<<<<<<< Updated upstream
-=======
     attr_accessor :current_app
->>>>>>> Stashed changes
 
     def self.ui
       @ui ||= Deployr::UI.new(STDOUT, STDERR, STDIN, config)
@@ -266,13 +263,7 @@ module Deployr
     end
 
     def read_config_file(config_file=nil)
-<<<<<<< Updated upstream
-      if File.exists?(config_file)
-        Deployr::Config.from_file(config_file)
-      end
-=======
       Deployr::Config.from_file(config_file) unless config_file.nil? && !File.exists?(config_file)
->>>>>>> Stashed changes
     end
 
     def load_deployment

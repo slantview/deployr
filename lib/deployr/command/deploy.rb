@@ -24,13 +24,12 @@ module Deployr
 
       banner "deployr deploy (options)"
 
-<<<<<<< Updated upstream
       def run
         ui.msg "Deploy#run"
         @source = Deployr::Deploy::SCM.new(@application.options[:scm], deployment)
         @strategy = Deployr::Deploy::Strategy.new(@application.options[:strategy], deployment, @source)
         @deployment.real_release = @source.query_revision(@source.head) { |cmd| @deployment.invoke_local_command(cmd) }
-=======
+
       option :branch,
         :short => "-b BRANCH",
         :long => "--branch BRANCH",
@@ -50,7 +49,6 @@ module Deployr
           branch = @current_app.options[:branch]
         end
         @deployment.real_release = @source.query_revision(branch) { |cmd| @deployment.invoke_local_command(cmd) }
->>>>>>> Stashed changes
         @deployment.start(self)
       end
 

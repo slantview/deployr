@@ -100,8 +100,6 @@ module Deployr
       output
     end
 
-<<<<<<< Updated upstream
-=======
     def find_servers_for_task(filter = nil)
       server_array = Hash.new
       if !@config[:environment].nil?
@@ -117,7 +115,6 @@ module Deployr
       server_array
     end
 
->>>>>>> Stashed changes
     def cleanup_old_releases
       self.invoke_command("cd #{@releases_path} && rm -rf `ls -tr |head -n -5`")
     end

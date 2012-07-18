@@ -41,8 +41,6 @@ module Deployr
       :default => nil,
       :description => "The configuration file to use."
 
-<<<<<<< Updated upstream
-=======
     option :environment,
       :short => "-E ENVIRONMENT",
       :long => "--environment ENVIRONMENT",
@@ -63,7 +61,6 @@ module Deployr
       :boolean => true,
       :description => "Deploy all defined applications in deploy file. Use -a <application> for only one."
 
->>>>>>> Stashed changes
     option :log_level,
       :short => "-l LEVEL",
       :long => "--log_level LEVEL",
