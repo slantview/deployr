@@ -23,6 +23,7 @@ require 'deployr/hook'
 require 'deployr/service'
 require 'deployr/server'
 require 'deployr/sshkey'
+require 'deployr/environment'
 require 'deployr/deployment_runner'
 
 module Deployr
@@ -32,7 +33,7 @@ module Deployr
     include Deployr::Mixin::FromFile
     include Deployr::Deployment::Runner
 
-    attr_accessor :id, :release_name, :config, :real_release, :pointer_moved
+    attr_accessor :id, :release_name, :config, :real_release, :pointer_moved, :options
     attr_reader :app_object
     attr_reader :deploy_to
     attr_reader :releases_path
@@ -48,6 +49,7 @@ module Deployr
     attr_reader :site_dir
     attr_reader :site_url
     attr_reader :code_dir
+    attr_reader :app_env
 
     def initialize(config)
       @config = config
@@ -64,18 +66,37 @@ module Deployr
 
       load_deploy_file
 
-      @id = "#{@application.platform_name}_#{@release_name}"
-      @hooks = (@hooks.nil? ? @application.hooks : @hooks.merge!(@application.hooks))
-      @services = (@services.nil? ? @application.services : @services.merge!(@application.services))
-      @servers = (@servers.nil? ? @application.servers : @servers.merge!(@application.servers))
-      @ssh_keys = (@ssh_keys.nil? ? @application.ssh_keys : @ssh_keys.merge!(@application.hooks))
-
       # TODO fixme so we don't have to do this. (it has to do with the DSL + @application instance name being the same.)
-      @app_object = @application.dup
+      if @applications.length == 1 || @config[:application] == :default
+        @app_object = @applications[@applications.keys.pop]
+      else
+        if @applications.has_key?(@config[:application])
+          @app_object = @applications[@config[:application]]
+        else
+          raise Deployr::Error, "Unable to find application '#{@config[:application]}'."
+        end
+      end
+
+      @options = @app_object.options.dup
       # END TODO
 
-      @options = @app_object.options
-      @deploy_to = @options[:deploy_to]
+      # Merge environments last
+      if not @environments.has_key?(@config[:environment])
+        raise Deployr::Error, "Unable to find environment #{@config[:environment]}"
+      end
+      # Get the environment from defaults
+      @app_env = @environments[@config[:environment]]
+      @options[:deploy_to] = @app_env.options[:deploy_to]
+
+      # Now that we have the environment, override defaults with environment variables.
+      merge_instance_variables(@app_env.options)
+
+      @id = "#{@app_object.platform_name}_#{@release_name}"
+      @hooks = (@hooks.nil? ? @app_object.hooks : @hooks.merge!(@app_object.hooks))
+      @services = (@services.nil? ? @app_object.services : @services.merge!(@app_object.services))
+      @servers = (@servers.nil? ? @app_object.servers : @servers.merge!(@app_object.servers))
+      
+      @deploy_to = @options.has_key?(:deploy_to) ? @options[:deploy_to] : "/var/www/#{app_object.name}"
       @releases_path = File.join(@deploy_to, @options[:releases_dir])
       @current_path  = File.join(@deploy_to, @options[:current_dir])
       @release_path = File.join(@releases_path, @release_name)
@@ -88,12 +109,26 @@ module Deployr
       @site_url = @options[:site_url]
       @code_dir = @options[:code_dir] || ''
       @site_dir = @options[:site_dir] || File.join(@code_dir, "sites/default")
+
+      # TODO: Cleanup the inheritance issue with Application > Environment > Server, and 
+      # find a cleaner way to apply inheritance on each variable.
+      @servers.each do |name, server|
+        %w{ user key }.each do |key|
+          sym_key = "ssh_#{key}".to_sym
+          if @app_env.options.has_key?(sym_key)
+            @servers[name].instance_variable_set("@#{key}", @app_env.options[sym_key])
+          elsif @app_object.options.has_key?(sym_key)
+            @servers[name].instance_variable_set("@#{key}", @app_object.options[sym_key])
+          end
+
+        end
+      end
     end
 
-    def invoke_command(command)
+    def invoke_command(command, filter = nil)
       use_sudo = @options[:use_sudo]
       output = Hash.new
-      @servers.each do |name, server|
+      find_servers_for_task(filter).each do |name, server|
         puts "Invoking #{command} on #{name.to_s}"
         output[name] = server.exec "#{command}"
       end
@@ -151,10 +186,22 @@ module Deployr
           @deploy_file = candidate_file
           break
         else
-            raise IOError, "File doesn't exist or is unreadable."
+          raise Deployr::Error, "File doesn't exist or is unreadable."
         end
       end
       @deploy_file
+    end
+
+    def merge_instance_variables(options = {}, instance = nil)
+      instance = self if instance.nil?
+      options.each do |key, value|
+        instance.instance_variable_set("@#{key}", value)
+      end
+      if not options.has_key?(:deploy_to)
+        puts "ASSIGN DEPLOY_TO"
+        instance.deploy_to = options[:deploy_to]
+        puts instance.inspect
+      end
     end
   end
 end

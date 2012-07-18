@@ -16,19 +16,14 @@
 # limitations under the License.
 #
 
-require 'deployr/recipes/init/setup'
-
 module Deployr
-  class Command
-    class Init < Command
+  class Environment
 
-      banner "deployr init (options)"
+    attr_accessor :name
+    attr_accessor :options
 
-      def run
-        ui.msg "Running Init..."
-        @setup = Deployr::Init::Setup.new(@deployment, @current_app, @ui)
-        @setup.create_directories
-      end
+    def initialize(name, options = {}, config = {})
+      @name, @options, @config = name, options, config
     end
   end
 end

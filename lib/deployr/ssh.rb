@@ -83,7 +83,6 @@ module Deployr
       # delete these, since we've determined which username to use by this point
       ssh_options.delete(:username)
       ssh_options.delete(:user)
-
       begin
         connection_options = ssh_options.merge(
           :password => password_value,

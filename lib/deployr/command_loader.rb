@@ -48,8 +48,11 @@ module Deployr
         user_specific_files.concat Dir.glob(File.expand_path("command/*.rb", deployr_config_dir))
       end
 
-      # finally search ~/.deployr/command/*.rb
+      # Search ~/.deployr/command/*.rb
       user_specific_files.concat Dir.glob(File.join(env['HOME'], '.deployr', 'command', '*.rb'))
+      
+      # Search PWD/command/*.rb
+      user_specific_files.concat Dir.glob(File.join(Dir.getwd, 'command', '*.rb'))
 
       user_specific_files
     end

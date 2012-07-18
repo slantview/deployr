@@ -270,14 +270,16 @@ module Deployr
       @deployment ||= Deployr::Deployment.new(config)
       @deployment.load_deploy_file
       # TODO: fix this shit.  shouldn't need this here.
-      @application = @deployment.app_object
+      @current_app = @deployment.app_object
 
       # Now this is a little weird, we want to extend deployment so that it has
       # the functionality defined in the platform.  This can be extended also by
       # the application instance because of the Deployfile.
       klass_name = self.class.name.split('::').last
-      platform_command_klass = @application.platform.class.const_get(klass_name)
-      self.extend(platform_command_klass)
+      if @current_app.platform.class.const_defined?(klass_name)
+        platform_command_klass = @current_app.platform.class.const_get(klass_name)
+        self.extend(platform_command_klass)
+      end
     end
 
     def show_usage
