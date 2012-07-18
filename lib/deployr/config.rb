@@ -25,11 +25,13 @@ module Deployr
 
     configure do |c|
       c[:version] = Deployr::VERSION
-      c[:log_level] = 'debug'
+      c[:log_level] = :debug
       c[:color] = true
       c[:deploy_file] = nil
       c[:help] = false
-    end
 
+      # Set global $DEBUG to true
+      #$DEBUG = (config[:log_level] == :debug) ? true : false
+    end
   end
 end
